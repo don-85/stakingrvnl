@@ -111,82 +111,89 @@
         </div>
     </div>
 
-    <script src="https://cdn.ethers.io/lib/ethers-5.2.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <script>
-        const stakingContractAddress = "0x4B222f0B04525cB12d5671a4A36f2D39605DF6a0";
-        const tokenContractAddress = "YOUR_RVNL_TOKEN_CONTRACT_ADDRESS_HERE";
-
-        const abi = [
-            {
-                "inputs": [
-                    { "internalType": "uint256", "name": "_amount", "type": "uint256" },
-                    { "internalType": "uint256", "name": "_duration", "type": "uint256" }
-                ],
-                "name": "stake",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            }
-        ];
-
-        const tokenAbi = [
-            {
-                "constant": false,
-                "inputs": [
-                    { "name": "_spender", "type": "address" },
-                    { "name": "_value", "type": "uint256" }
-                ],
-                "name": "approve",
-                "outputs": [{ "name": "", "type": "bool" }],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            }
-        ];
-
-        document.getElementById('stakeButton').addEventListener('click', async () => {
-            const stakeAmount = document.getElementById('stakeAmount').value;
-            const duration = document.querySelector('input[name="stakeDuration"]:checked');
-
-            if (!stakeAmount || stakeAmount <= 0 || !duration) {
-                document.getElementById('stakeResult').textContent = "Please enter a valid amount and select a duration.";
+        document.addEventListener('DOMContentLoaded', function () {
+            if (typeof ethers === 'undefined') {
+                document.getElementById('stakeResult').textContent = "Error: ethers.js library failed to load.";
                 return;
             }
-
-            try {
-                if (typeof window.ethereum !== 'undefined') {
-                    const provider = new ethers.providers.Web3Provider(window.ethereum);
-                    const signer = provider.getSigner();
-
-                    // Connect wallet
-                    await window.ethereum.request({ method: 'eth_requestAccounts' });
-
-                    // Token approval
-                    const tokenContract = new ethers.Contract(tokenContractAddress, tokenAbi, signer);
-                    const amountInWei = ethers.utils.parseUnits(stakeAmount, 18);
-
-                    document.getElementById('stakeResult').textContent = "Approving tokens...";
-
-                    const approvalTx = await tokenContract.approve(stakingContractAddress, amountInWei);
-                    await approvalTx.wait();
-
-                    document.getElementById('stakeResult').textContent = "Tokens approved. Staking now...";
-
-                    // Staking
-                    const stakingContract = new ethers.Contract(stakingContractAddress, abi, signer);
-                    const tx = await stakingContract.stake(amountInWei, duration.value);
-
-                    document.getElementById('stakeResult').textContent = "Transaction submitted. Waiting for confirmation...";
-
-                    await tx.wait();
-                    document.getElementById('stakeResult').textContent = "Stake successful!";
-                } else {
-                    document.getElementById('stakeResult').textContent = "Ethereum wallet not detected.";
+    
+            const stakingContractAddress = "0x4B222f0B04525cB12d5671a4A36f2D39605DF6a0";
+            const tokenContractAddress = "YOUR_RVNL_TOKEN_CONTRACT_ADDRESS_HERE";
+    
+            const abi = [
+                {
+                    "inputs": [
+                        { "internalType": "uint256", "name": "_amount", "type": "uint256" },
+                        { "internalType": "uint256", "name": "_duration", "type": "uint256" }
+                    ],
+                    "name": "stake",
+                    "outputs": [],
+                    "stateMutability": "nonpayable",
+                    "type": "function"
                 }
-            } catch (error) {
-                console.error(error);
-                document.getElementById('stakeResult').textContent = "Transaction failed: " + (error.reason || error.message);
-            }
+            ];
+    
+            const tokenAbi = [
+                {
+                    "constant": false,
+                    "inputs": [
+                        { "name": "_spender", "type": "address" },
+                        { "name": "_value", "type": "uint256" }
+                    ],
+                    "name": "approve",
+                    "outputs": [{ "name": "", "type": "bool" }],
+                    "stateMutability": "nonpayable",
+                    "type": "function"
+                }
+            ];
+    
+            document.getElementById('stakeButton').addEventListener('click', async () => {
+                const stakeAmount = document.getElementById('stakeAmount').value;
+                const duration = document.querySelector('input[name="stakeDuration"]:checked');
+    
+                if (!stakeAmount || stakeAmount <= 0 || !duration) {
+                    document.getElementById('stakeResult').textContent = "Please enter a valid amount and select a duration.";
+                    return;
+                }
+    
+                try {
+                    if (typeof window.ethereum !== 'undefined') {
+                        const provider = new ethers.providers.Web3Provider(window.ethereum);
+                        const signer = provider.getSigner();
+    
+                        // Connect wallet
+                        await window.ethereum.request({ method: 'eth_requestAccounts' });
+    
+                        // Token approval
+                        const tokenContract = new ethers.Contract(tokenContractAddress, tokenAbi, signer);
+                        const amountInWei = ethers.utils.parseUnits(stakeAmount, 18);
+    
+                        document.getElementById('stakeResult').textContent = "Approving tokens...";
+    
+                        const approvalTx = await tokenContract.approve(stakingContractAddress, amountInWei);
+                        await approvalTx.wait();
+    
+                        document.getElementById('stakeResult').textContent = "Tokens approved. Staking now...";
+    
+                        // Staking
+                        const stakingContract = new ethers.Contract(stakingContractAddress, abi, signer);
+                        const tx = await stakingContract.stake(amountInWei, duration.value);
+    
+                        document.getElementById('stakeResult').textContent = "Transaction submitted. Waiting for confirmation...";
+    
+                        await tx.wait();
+                        document.getElementById('stakeResult').textContent = "Stake successful!";
+                    } else {
+                        document.getElementById('stakeResult').textContent = "Ethereum wallet not detected.";
+                    }
+                } catch (error) {
+                    console.error(error);
+                    document.getElementById('stakeResult').textContent = "Transaction failed: " + (error.reason || error.message);
+                }
+            });
         });
-    </script>
+    </script>    
 </body>
 </html>
