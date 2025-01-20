@@ -113,102 +113,103 @@
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
-<script>
-    document.addEventListener('DOMContentLoaded', async function () {
-        if (typeof ethers === 'undefined') {
-            document.getElementById('stakeResult').textContent = "Error: ethers.js library failed to load.";
-            return;
-        }
-
-        if (!window.ethereum) {
-            document.getElementById('stakeResult').textContent = "MetaMask is not installed. Please install it to proceed.";
-            return;
-        }
-
-        const stakingContractAddress = "0x4B222f0B04525cB12d5671a4A36f2D39605DF6a0";
-        const tokenContractAddress = "0xfD176Df359fD5E0D05C863606FB9319b26c53aA5";
-
-        // Use Binance Smart Chain provider
-        const provider = new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org/");
-
-        const abi = [
-            {
-                "inputs": [
-                    { "internalType": "uint256", "name": "_amount", "type": "uint256" },
-                    { "internalType": "uint256", "name": "_duration", "type": "uint256" }
-                ],
-                "name": "stake",
-                "outputs": [],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            }
-        ];
-
-        const tokenAbi = [
-            {
-                "constant": false,
-                "inputs": [
-                    { "name": "_spender", "type": "address" },
-                    { "name": "_value", "type": "uint256" }
-                ],
-                "name": "approve",
-                "outputs": [{ "name": "", "type": "bool" }],
-                "stateMutability": "nonpayable",
-                "type": "function"
-            }
-        ];
-
-        document.getElementById('stakeButton').addEventListener('click', async () => {
-            const stakeAmount = document.getElementById('stakeAmount').value;
-            const duration = document.querySelector('input[name="stakeDuration"]:checked');
-
-            if (!stakeAmount || stakeAmount <= 0 || !duration) {
-                document.getElementById('stakeResult').textContent = "Please enter a valid amount and select a duration.";
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', async function () {
+            if (typeof ethers === 'undefined') {
+                document.getElementById('stakeResult').textContent = "Error: ethers.js library failed to load.";
                 return;
             }
-
-            try {
-                await window.ethereum.request({ method: 'eth_requestAccounts' });
-
-                const web3Provider = new ethers.providers.Web3Provider(window.ethereum);
-                const signer = web3Provider.getSigner();
-                const userAddress = await signer.getAddress();
-
-                // Ensure we're connected to Binance Smart Chain
-                const network = await web3Provider.getNetwork();
-                if (network.chainId !== 56) {
-                    document.getElementById('stakeResult').textContent = "Please switch to Binance Smart Chain in MetaMask.";
+    
+            if (!window.ethereum) {
+                document.getElementById('stakeResult').textContent = "MetaMask is not installed. Please install it to proceed.";
+                return;
+            }
+    
+            const stakingContractAddress = "0x4B222f0B04525cB12d5671a4A36f2D39605DF6a0";
+            const tokenContractAddress = "0xfD176Df359fD5E0D05C863606FB9319b26c53aA5";
+    
+            // Use Binance Smart Chain provider
+            const provider = new ethers.providers.JsonRpcProvider("https://bsc-dataseed.binance.org/");
+    
+            const abi = [
+                {
+                    "inputs": [
+                        { "internalType": "uint256", "name": "_amount", "type": "uint256" },
+                        { "internalType": "uint256", "name": "_duration", "type": "uint256" }
+                    ],
+                    "name": "stake",
+                    "outputs": [],
+                    "stateMutability": "nonpayable",
+                    "type": "function"
+                }
+            ];
+    
+            const tokenAbi = [
+                {
+                    "constant": false,
+                    "inputs": [
+                        { "name": "_spender", "type": "address" },
+                        { "name": "_value", "type": "uint256" }
+                    ],
+                    "name": "approve",
+                    "outputs": [{ "name": "", "type": "bool" }],
+                    "stateMutability": "nonpayable",
+                    "type": "function"
+                }
+            ];
+    
+            document.getElementById('stakeButton').addEventListener('click', async () => {
+                const stakeAmount = document.getElementById('stakeAmount').value;
+                const duration = document.querySelector('input[name="stakeDuration"]:checked');
+    
+                if (!stakeAmount || stakeAmount <= 0 || !duration) {
+                    document.getElementById('stakeResult').textContent = "Please enter a valid amount and select a duration.";
                     return;
                 }
-
-                // Token approval
-                const tokenContract = new ethers.Contract(tokenContractAddress, tokenAbi, signer);
-                const amountInWei = ethers.utils.parseUnits(stakeAmount, 18);
-
-                document.getElementById('stakeResult').textContent = "Approving tokens...";
-
-                const approvalTx = await tokenContract.approve(stakingContractAddress, amountInWei);
-                await approvalTx.wait();
-
-                document.getElementById('stakeResult').textContent = "Tokens approved. Staking now...";
-
-                // Staking process
-                const stakingContract = new ethers.Contract(stakingContractAddress, abi, signer);
-                const tx = await stakingContract.stake(amountInWei, duration.value);
-
-                document.getElementById('stakeResult').textContent = "Transaction submitted. Waiting for confirmation...";
-
-                await tx.wait();
-                document.getElementById('stakeResult').textContent = "Stake successful!";
-            } else {
-                document.getElementById('stakeResult').textContent = "Ethereum wallet not detected.";
-            }
-        } catch (error) {
-                console.error(error);
-                document.getElementById('stakeResult').textContent = "Transaction failed: " + (error.reason || error.message);
-            }
+    
+                try {
+                    await window.ethereum.request({ method: 'eth_requestAccounts' });
+    
+                    const web3Provider = new ethers.providers.Web3Provider(window.ethereum);
+                    const signer = web3Provider.getSigner();
+                    const userAddress = await signer.getAddress();
+    
+                    // Ensure we're connected to Binance Smart Chain
+                    const network = await web3Provider.getNetwork();
+                    if (network.chainId !== 56) {
+                        document.getElementById('stakeResult').textContent = "Please switch to Binance Smart Chain in MetaMask.";
+                        return;
+                    }
+    
+                    // Token approval
+                    const tokenContract = new ethers.Contract(tokenContractAddress, tokenAbi, signer);
+                    const amountInWei = ethers.utils.parseUnits(stakeAmount, 18);
+    
+                    document.getElementById('stakeResult').textContent = "Approving tokens...";
+    
+                    const approvalTx = await tokenContract.approve(stakingContractAddress, amountInWei);
+                    await approvalTx.wait();
+    
+                    document.getElementById('stakeResult').textContent = "Tokens approved. Staking now...";
+    
+                    // Staking process
+                    const stakingContract = new ethers.Contract(stakingContractAddress, abi, signer);
+                    const tx = await stakingContract.stake(amountInWei, duration.value);
+    
+                    document.getElementById('stakeResult').textContent = "Transaction submitted. Waiting for confirmation...";
+    
+                    await tx.wait();
+                    document.getElementById('stakeResult').textContent = "Stake successful!";
+                } else {
+                    document.getElementById('stakeResult').textContent = "Ethereum wallet not detected.";
+                }
+            } catch (error) {
+                    console.error(error);
+                    document.getElementById('stakeResult').textContent = "Transaction failed: " + (error.reason || error.message);
+                }
+            });
         });
-    });
-</script>
+    </script>
 </body>
 </html>
