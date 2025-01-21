@@ -111,7 +111,6 @@
         </div>
     </div>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
-
 <script>
     document.addEventListener('DOMContentLoaded', async function () {
         if (typeof ethers === 'undefined') {
@@ -141,12 +140,22 @@
                 document.getElementById('stakeResult').textContent = "Connecting wallet...";
                 await window.ethereum.request({ method: 'eth_requestAccounts' });
 
-                const provider = new ethers.providers.Web3Provider(window.ethereum);
-                const signer = provider.getSigner();
+                // Use fallback RPC in case of network issues
+                const provider = new ethers.providers.JsonRpcProvider('https://bsc-dataseed.binance.org/');
+                const web3Provider = new ethers.providers.Web3Provider(window.ethereum);
+                
+                // Handle network changes gracefully
+                web3Provider.on('network', (newNetwork, oldNetwork) => {
+                    if (oldNetwork) {
+                        window.location.reload();
+                    }
+                });
+
+                const signer = web3Provider.getSigner();
                 const userAddress = await signer.getAddress();
 
                 // Ensure we're on Binance Smart Chain
-                const network = await provider.getNetwork();
+                const network = await web3Provider.getNetwork();
                 if (network.chainId !== 56) {
                     document.getElementById('stakeResult').textContent = "Please switch to Binance Smart Chain in MetaMask.";
                     return;
@@ -192,7 +201,9 @@
                 ];
 
                 const stakingContract = new ethers.Contract(stakingContractAddress, stakingAbi, signer);
-                const tx = await stakingContract.stake(amountInWei, duration.value);
+                
+                // Providing gas limit to avoid estimation issues
+                const tx = await stakingContract.stake(amountInWei, duration.value, { gasLimit: ethers.utils.hexlify(200000) });
 
                 document.getElementById('stakeResult').textContent = "Transaction submitted. Waiting for confirmation...";
 
@@ -200,7 +211,13 @@
                 document.getElementById('stakeResult').textContent = "Stake successful!";
             } catch (error) {
                 console.error(error);
-                document.getElementById('stakeResult').textContent = "Transaction failed: " + (error.reason || error.message);
+                if (error.code === 'INSUFFICIENT_FUNDS') {
+                    document.getElementById('stakeResult').textContent = "Error: Insufficient funds for gas fees.";
+                } else if (error.code === 'NETWORK_ERROR') {
+                    document.getElementById('stakeResult').textContent = "Network error. Please check your connection.";
+                } else {
+                    document.getElementById('stakeResult').textContent = "Transaction failed: " + (error.reason || error.message);
+                }
             }
         });
     });
